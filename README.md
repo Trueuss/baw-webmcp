@@ -2,7 +2,9 @@
 
 > A privacy-first AI stylist that lives in your browser — now with a **WebMCP** surface so any agent can collaborate with you on dressing better.
 
-This repository contains a submission to [The WebMCP Challenge](https://webmcp.devpost.com/) (Devpost, deadline **Sep 3, 2026**). It extends a hand-crafted product demo — *BAW* — with 10 native WebMCP tools, a "Pair Stylist" cross-tool copilot, and reactive schemas that change as the wardrobe changes.
+This repository contains a submission to [The WebMCP Challenge](https://webmcp.devpost.com/) (Devpost, deadline **Sep 3, 2026**). It extends a hand-crafted product demo — *BAW* — with 12 native WebMCP tools, a "Pair Stylist" cross-tool copilot, and reactive schemas that change as the wardrobe changes.
+
+**Repository:** [github.com/Trueuss/baw-webmcp](https://github.com/Trueuss/baw-webmcp) · **Live demo:** deploy with the one-click Vercel button below.
 
 ![BAW home](public/demo/06-home-fold.png)
 
@@ -99,6 +101,28 @@ npm run build
 npm start
 ```
 
+## How to deploy
+
+The fastest path is one-click Vercel:
+
+1. Open <https://vercel.com/new>.
+2. "Import Git Repository" → choose `Trueuss/baw-webmcp`.
+3. Vercel auto-detects Next.js. Click **Deploy**.
+4. The first build takes ~60 seconds. Your URL is
+   `https://baw-webmcp.vercel.app` (or a custom subdomain).
+
+Manual deploys via the CLI are also fine:
+
+```bash
+npm i -g vercel
+vercel login
+vercel --prod          # from inside the project
+```
+
+The repository ships a [`vercel.json`](./vercel.json) that sets the
+preferred regions (HND + IAD), security headers, and a tighter
+`Permissions-Policy` that allows WebMCP tools only from the same origin.
+
 ### Trying the WebMCP surface
 
 To call the tools from a real agent you need a WebMCP-aware browser:
@@ -161,4 +185,5 @@ product context that WebMCP plugs into.
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+MIT — see [LICENSE](./LICENSE). Contributions welcome — see
+[CONTRIBUTING.md](./CONTRIBUTING.md).
