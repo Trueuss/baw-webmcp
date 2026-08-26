@@ -26,7 +26,9 @@ const TOOLS = [
   { name: 'save_outfit', annotation: 'write' },
   { name: 'list_history', annotation: 'readOnly' },
   { name: 'get_session_state', annotation: 'readOnly' },
-  { name: 'compare_outfits', annotation: 'readOnly' }
+  { name: 'compare_outfits', annotation: 'readOnly' },
+  { name: 'get_lookbook', annotation: 'readOnly' },
+  { name: 'apply_suggestion', annotation: 'write' }
 ];
 
 function newId(prefix: string) {

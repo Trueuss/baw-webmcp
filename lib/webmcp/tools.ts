@@ -18,7 +18,8 @@ import type {
   GarmentCategory,
   StyleTag,
   Occasion,
-  Season
+  Season,
+  StylistSuggestion
 } from '../types';
 import { analyzeOutfit } from '../mock/analyzer';
 import { emitToolChange } from './bus';
@@ -391,6 +392,78 @@ export function registerStylistTools(opts: RegisterOpts) {
     }
   };
 
+  const getLookbook = {
+    name: 'get_lookbook',
+    description:
+      'Return the user\u2019s saved looks from the lookbook. Each entry includes the label, the garment ids, the occasion and season, and the predicted score (if analyze_outfit was run before saving). Use this to reference past looks when proposing something new.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        limit: { type: 'number', description: 'Default 10, max 50.' }
+      }
+    },
+    annotations: { readOnlyHint: true },
+    execute: async (input: { limit?: number } = {}) => {
+      const n = Math.min(50, Math.max(1, input.limit ?? 10));
+      const entries = h.outfits.slice(0, n).map((o) => {
+        const score =
+          h.reports.find((r) => r.outfitId === o.id)?.overall ??
+          analyzeOutfit(
+            o.garmentIds.map((id) => w.getById(id)).filter(Boolean) as Garment[]
+          ).overall;
+        return {
+          id: o.id,
+          label: o.label,
+          occasion: o.occasion,
+          season: o.season,
+          garmentIds: o.garmentIds,
+          predictedScore: score,
+          createdAt: o.createdAt
+        };
+      });
+      log(h, 'agent', 'get_lookbook', `Returned ${entries.length} saved look(s).`);
+      return { count: entries.length, entries };
+    }
+  };
+
+  const applySuggestion = {
+    name: 'apply_suggestion',
+    description:
+      'Apply a proposed outfit by writing the garment ids into the Style Lab selection. The Style Lab page (in any open tab) receives the change via the local event bus, recomputes the score live, and highlights the applied suggestion in the UI. Use this after propose_outfit when the user accepts the agent\u2019s recommendation.',
+    inputSchema: {
+      type: 'object',
+      required: ['garmentIds'],
+      properties: {
+        garmentIds: {
+          type: 'array',
+          items: { type: 'string', enum: w.garments.map((g) => g.id) }
+        },
+        label: { type: 'string' }
+      }
+    },
+    execute: async (input: { garmentIds: string[]; label?: string }) => {
+      const garments = input.garmentIds
+        .map((id) => w.getById(id))
+        .filter((g): g is Garment => Boolean(g));
+      if (garments.length === 0) {
+        return { error: 'No valid garments. Call list_wardrobe first.' };
+      }
+      const report = analyzeOutfit(garments);
+      const suggestion: StylistSuggestion = {
+        id: `sg_${Math.random().toString(36).slice(2, 10)}`,
+        type: 'propose',
+        message: input.label
+          ? `Applied "${input.label}" (${garments.length} pieces, ${report.overall}/10) to the Style Lab.`
+          : `Applied ${garments.length} pieces to the Style Lab. Predicted ${report.overall}/10.`,
+        createdAt: Date.now(),
+        status: 'accepted'
+      };
+      h.addEntry({ source: 'agent', tool: 'apply_suggestion', message: suggestion.message });
+      emitToolChange({ reason: 'suggestion', detail: { ...suggestion, appliedGarmentIds: input.garmentIds } });
+      return { ok: true, suggestion, garments: garments.map(summarise), preview: report };
+    }
+  };
+
   return [
     { definition: listWardrobe },
     { definition: getGarment },
@@ -401,7 +474,9 @@ export function registerStylistTools(opts: RegisterOpts) {
     { definition: saveOutfit },
     { definition: listHistory },
     { definition: getSessionState },
-    { definition: compareOutfits }
+    { definition: compareOutfits },
+    { definition: getLookbook },
+    { definition: applySuggestion }
   ] as Array<{ definition: unknown; cleanup?: () => void }>;
 }
 

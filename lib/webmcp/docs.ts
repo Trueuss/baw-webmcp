@@ -265,5 +265,50 @@ await document.modelContext.executeTool(tool, JSON.stringify({
 
 // Response shape
 { a: { label, report }, b: { label, report }, winner: 'a' | 'b', delta: 0.3 }`
+  },
+  {
+    name: 'get_lookbook',
+    description:
+      'Return the user\u2019s saved looks from the lookbook. Each entry includes the label, the garment ids, the occasion and season, and the predicted score (if analyze_outfit was run before saving). Use this to reference past looks when proposing something new.',
+    annotations: ['readOnlyHint'],
+    inputSchema: {
+      type: 'object',
+      properties: {
+        limit: { type: 'number', description: 'Default 10, max 50.' }
+      }
+    },
+    example:
+`// Call
+await document.modelContext.executeTool(tool, '{"limit": 5}');
+
+// Response shape
+{ count, entries: [{ id, label, occasion, season, garmentIds, predictedScore, createdAt }] }`
+  },
+  {
+    name: 'apply_suggestion',
+    description:
+      'Apply a proposed outfit by writing the garment ids into the Style Lab selection. The Style Lab page (in any open tab) receives the change via the local event bus, recomputes the score live, and highlights the applied suggestion in the UI. Use this after propose_outfit when the user accepts the agent\u2019s recommendation.',
+    annotations: [],
+    inputSchema: {
+      type: 'object',
+      required: ['garmentIds'],
+      properties: {
+        garmentIds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Garment ids to apply. Built from the live wardrobe.'
+        },
+        label: { type: 'string', description: 'Optional label for the suggestion.' }
+      }
+    },
+    example:
+`// Call
+await document.modelContext.executeTool(tool, JSON.stringify({
+  garmentIds: ['g_oversized_blazer', 'g_black_turtleneck', 'g_cropped_trouser', 'g_white_leather_sneaker'],
+  label: 'with merino turtleneck'
+}));
+
+// Response shape
+{ ok, suggestion, garments, preview: { overall, axes, ... } }`
   }
 ];

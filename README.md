@@ -47,20 +47,22 @@ verdict (silhouette, palette, texture, occasion fit) in under 4 seconds. The
 *same wardrobe* is exposed to agents through 10 WebMCP tools, so the
 in-browser stylist and the in-browser agent look at the same source of truth.
 
-### The 10 tools
+### The 12 tools
 
-| Name | Annotation | What it does |
-| --- | --- | --- |
-| `list_wardrobe` | `readOnlyHint` | Return every garment, optionally filtered by category. |
-| `get_garment` | `readOnlyHint` | Fetch a single garment by id, including fabric and palette. |
-| `add_garment` | write | Add a new piece. Required: `name`, `category`, `fabric`. |
-| `remove_garment` | `destructiveHint`, `idempotentHint` | Remove a piece permanently. Always requires user confirmation in the UI. |
-| `analyze_outfit` | `readOnlyHint` | Score a set of garments on the four BAW axes. **Input schema's `garmentIds` enum is rebuilt from the live wardrobe** — a reactive schema. |
-| `propose_outfit` | `readOnlyHint` | Generate a recommended combination for a given occasion/season. |
-| `save_outfit` | write | Persist a proposed outfit to the user's lookbook. |
-| `list_history` | `readOnlyHint` | Recent session entries (human, agent, system sources). |
-| `get_session_state` | `readOnlyHint` | One-shot snapshot of wardrobe / outfits / reports / last activity. |
-| `compare_outfits` | `readOnlyHint` | Score two outfits side by side and return a winner. |
+| # | Name | Annotation | What it does |
+| --- | --- | --- | --- |
+| 1 | `list_wardrobe` | `readOnlyHint` | Return every garment, optionally filtered by category. |
+| 2 | `get_garment` | `readOnlyHint` | Fetch a single garment by id, including fabric and palette. |
+| 3 | `add_garment` | write | Add a new piece. Required: `name`, `category`, `fabric`. |
+| 4 | `remove_garment` | `destructiveHint`, `idempotentHint` | Remove a piece permanently. Always requires user confirmation in the UI. |
+| 5 | `analyze_outfit` | `readOnlyHint` | Score a set of garments on the four BAW axes. **Input schema's `garmentIds` enum is rebuilt from the live wardrobe** — a reactive schema. |
+| 6 | `propose_outfit` | `readOnlyHint` | Generate a recommended combination for a given occasion/season. |
+| 7 | `save_outfit` | write | Persist a proposed outfit to the user's lookbook. |
+| 8 | `list_history` | `readOnlyHint` | Recent session entries (human, agent, system sources). |
+| 9 | `get_session_state` | `readOnlyHint` | One-shot snapshot of wardrobe / outfits / reports / last activity. |
+| 10 | `compare_outfits` | `readOnlyHint` | Score two outfits side by side and return a winner. |
+| 11 | `get_lookbook` | `readOnlyHint` | Return saved looks with their predicted scores. |
+| 12 | `apply_suggestion` | write | Push a proposed outfit into the live Style Lab selection via the event bus — the human and the agent see the same change instantly. |
 
 Every tool description is written for an agent: it tells the model **when** to
 call, what it returns, and what to do with the result. The `inputSchema`

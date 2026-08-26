@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useWardrobeStore } from '@/lib/store/wardrobe';
 import { useHistoryStore } from '@/lib/store/history';
 import { analyzeOutfit, AXIS_LABELS } from '@/lib/mock/analyzer';
-import { emitToolChange } from '@/lib/webmcp/bus';
+import { emitToolChange, onToolChange } from '@/lib/webmcp/bus';
 import { GarmentTile } from '@/components/stylelab/GarmentTile';
 import { ScorePanel } from '@/components/stylelab/ScorePanel';
 import { HistoryStrip } from '@/components/stylelab/HistoryStrip';
@@ -33,6 +33,7 @@ export default function StyleLab() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [adding, setAdding] = useState(false);
   const [filter, setFilter] = useState<'all' | 'outerwear' | 'top' | 'bottom' | 'shoe' | 'accessory'>('all');
+  const [flash, setFlash] = useState<string | null>(null);
 
   const filteredGarments = useMemo(
     () => (filter === 'all' ? garments : garments.filter((g) => g.category === filter)),
@@ -47,6 +48,18 @@ export default function StyleLab() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [garments]);
+
+  // Listen for agent-applied suggestions coming through the bus.
+  useEffect(() => {
+    return onToolChange((evt) => {
+      if (evt.reason !== 'suggestion') return;
+      const detail = evt.detail as { appliedGarmentIds?: string[]; message?: string } | undefined;
+      if (!detail?.appliedGarmentIds) return;
+      setSelected(detail.appliedGarmentIds);
+      setReport(null);
+      setFlash(detail.message ?? 'Suggestion applied by agent.');
+    });
+  }, []);
 
   function toggle(id: string) {
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
@@ -132,6 +145,29 @@ export default function StyleLab() {
           below is local — open DevTools to verify.
         </p>
       </header>
+
+      {flash && (
+        <div
+          role="status"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+            background: 'var(--ink)', color: 'var(--paper)',
+            padding: '10px 16px', borderRadius: 12, marginBottom: 24,
+            fontSize: 14
+          }}
+        >
+          <span>
+            <span style={{ color: 'var(--accent)' }}>●</span> {flash}
+          </span>
+          <button
+            onClick={() => setFlash(null)}
+            style={{ color: 'var(--muted-2)', fontSize: 18, lineHeight: 1 }}
+            aria-label="Dismiss"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       <div className="lab-grid">
         {/* ============ WARDROBE COLUMN ============ */}
