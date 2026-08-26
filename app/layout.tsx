@@ -3,6 +3,7 @@ import { Inter, Instrument_Serif, JetBrains_Mono } from 'next/font/google';
 import { WebMCPBanner } from '@/components/brand/WebMCPBanner';
 import { Nav } from '@/components/brand/Nav';
 import { Footer } from '@/components/brand/Footer';
+import { CommandPalette } from '@/components/brand/CommandPalette';
 import { WebMCPProvider } from '@/lib/webmcp/provider';
 import './globals.css';
 
@@ -42,13 +43,26 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: 'BAW' }],
   openGraph: {
-    title: 'BAW — Black and White. Dressed by intelligence.',
+    title: 'BAW · Pair Stylist — A privacy-first AI stylist for humans and agents.',
     description:
-      'A privacy-first AI stylist that lives entirely in your browser, with WebMCP tools for any agent to collaborate with you.',
+      'A privacy-first AI stylist that lives in your browser. 10 WebMCP tools let any agent collaborate with you on what you wear.',
     type: 'website',
-    siteName: 'BAW'
+    siteName: 'BAW',
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'BAW · Black and White, dressed by intelligence.'
+      }
+    ]
   },
-  twitter: { card: 'summary_large_image', title: 'BAW' }
+  twitter: {
+    card: 'summary_large_image',
+    title: 'BAW · Pair Stylist',
+    description: 'A privacy-first AI stylist that lives in your browser, with WebMCP tools for any agent.',
+    images: ['/opengraph-image']
+  }
 };
 
 export const viewport: Viewport = {
@@ -65,6 +79,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <WebMCPProvider />
         <WebMCPBanner />
         <Nav />
+        <CommandPalette />
         {children}
         <Footer />
       </body>
