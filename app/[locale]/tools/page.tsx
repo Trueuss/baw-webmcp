@@ -23,7 +23,7 @@ function ToolsPageInner({ docs, t, tBind }: { docs: ToolDoc[]; t: T; tBind: (key
     <main className="container-x" style={{ paddingTop: 140, paddingBottom: 120 }}>
       <div className="eyebrow" style={{ marginBottom: 24 }}>{tBind('tools.eyebrow')}</div>
       <h1 style={{ fontSize: 'clamp(56px, 9vw, 120px)', maxWidth: 900 }}>
-        {tBind('tools.title')}{' '}
+        {tBind('tools.title').replace('Twelve', 'Fifteen')}{' '}
         <em>{tBind('tools.title_emph')}</em>{' '}
         {tBind('tools.title_suffix')}
       </h1>

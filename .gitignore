@@ -63,3 +63,7 @@ commit-msg.txt
 .next/
 .next.bak
 demo.bak
+.next/
+.next.bak
+demo.bak
+fix-bak.ps1

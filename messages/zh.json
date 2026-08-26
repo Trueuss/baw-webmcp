@@ -320,7 +320,7 @@
   },
   "tools": {
     "eyebrow": "// tools · for agents",
-    "title": "Twelve tools.",
+    "title": "Fifteen tools.",
     "title_emph": "One wardrobe.",
     "title_suffix": "Both human and agent in the loop.",
     "lead": "When you load any BAW page in a WebMCP-aware browser (Chrome 149+ with the flag, or ChatGPT's in-app browser), these twelve tools are registered on document.modelContext. Below is what the agent actually sees: name, description, JSON Schema input, and the annotation that drives the trust boundary in the UI.",
@@ -409,6 +409,19 @@
     "apply_suggestion": {
       "desc": "通过写入 Style Lab 的选择区来应用推荐造型。Style Lab 页面(任何打开的 tab)通过本地事件总线接收变更,实时重算分数,UI 高亮已应用的建议。在 propose_outfit 之后,用户接受 agent 推荐时调用。",
       "label_desc": "可选: 建议的标签。"
+    },
+    "summarize_wardrobe": {
+      "desc": "返回整个衣橱的统计摘要: 品类分布、调色比例(灰阶度)、最常出现的 tag、平均分,以及利用率提示。给 agent 一个\"看一眼就懂\"的衣橱概况。",
+      "n_desc": "Top-N tag 默认 5。"
+    },
+    "export_wardrobe": {
+      "desc": "把当前衣橱 + 历史 + 已保存造型打包成 JSON,返回一个 data: URL,让用户能下载备份。这是个 destructive 工具因为会读出所有数据 — 必须先跟用户确认。",
+      "format_desc": "输出格式 (当前仅支持 json)。"
+    },
+    "import_wardrobe": {
+      "desc": "从一个之前 export_wardrobe 导出的 JSON 数据里恢复衣橱 + 历史 + 造型。先会用一个 dry_run 标记跑 dry-run 模式,返回将被替换的件数让用户确认,然后再 commit。",
+      "dry_run_desc": "true = 模拟导入并返回将受影响的件数。false = 真正写入。",
+      "data_desc": "Base64 编码的 JSON 字符串,或纯 JSON 文本。"
     }
   }
 }

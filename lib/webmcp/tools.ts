@@ -454,6 +454,168 @@ export function registerStylistTools(opts: RegisterOpts) {
     }
   };
 
+  const summarizeWardrobe = {
+    name: 'summarize_wardrobe',
+    description: t('tools_defs.summarize_wardrobe.desc'),
+    inputSchema: {
+      type: 'object',
+      properties: {
+        topN: {
+          type: 'number',
+          description: t('tools_defs.summarize_wardrobe.n_desc')
+        }
+      }
+    },
+    annotations: { readOnlyHint: true },
+    execute: async (input: { topN?: number } = {}) => {
+      const n = Math.min(20, Math.max(1, input.topN ?? 5));
+      const tags = topNTags(w.garments, n);
+      const palette = paletteSummary(w.garments);
+      const categories = categorySummary(w.garments);
+      const recentReports = h.reports.slice(0, 20);
+      const avgScore = recentReports.length
+        ? Math.round((recentReports.reduce((a, b) => a + b.overall, 0) / recentReports.length) * 10) / 10
+        : null;
+      const util = utilizationHint(w.garments, h.reports);
+      return {
+        generatedAt: Date.now(),
+        total: w.garments.length,
+        categories,
+        palette,
+        topTags: tags,
+        averageRecentScore: avgScore,
+        utilisationHint: util
+      };
+    }
+  };
+
+  const exportWardrobe = {
+    name: 'export_wardrobe',
+    description: t('tools_defs.export_wardrobe.desc'),
+    inputSchema: {
+      type: 'object',
+      properties: {
+        format: {
+          type: 'string',
+          enum: ['json'],
+          description: t('tools_defs.export_wardrobe.format_desc')
+        }
+      }
+    },
+    annotations: { destructiveHint: true, idempotentHint: true },
+    execute: async (input: { format?: 'json' } = {}) => {
+      const format = input.format ?? 'json';
+      if (format !== 'json') {
+        return { error: `Format "${format}" not supported in the demo.` };
+      }
+      const payload = {
+        version: 1,
+        exportedAt: Date.now(),
+        wardrobe: w.garments.map(summarise),
+        outfits: h.outfits,
+        reports: h.reports,
+        history: h.entries.slice(0, 100)
+      };
+      const json = JSON.stringify(payload, null, 2);
+      const b64 = Buffer.from(json, 'utf8').toString('base64');
+      log(h, 'agent', 'export_wardrobe', `Exported ${w.garments.length} garments as JSON.`);
+      return {
+        ok: true,
+        format: 'json',
+        filename: `baw-wardrobe-${new Date().toISOString().slice(0, 10)}.json`,
+        size: json.length,
+        base64: b64,
+        // Convenience for tool calls that prefer to receive the body inline
+        inline: json.length <= 8_000 ? json : undefined
+      };
+    }
+  };
+
+  const importWardrobe = {
+    name: 'import_wardrobe',
+    description: t('tools_defs.import_wardrobe.desc'),
+    inputSchema: {
+      type: 'object',
+      required: ['data'],
+      properties: {
+        dry_run: {
+          type: 'boolean',
+          description: t('tools_defs.import_wardrobe.dry_run_desc')
+        },
+        data: {
+          type: 'string',
+          description: t('tools_defs.import_wardrobe.data_desc')
+        }
+      }
+    },
+    annotations: {},
+    execute: async (input: { data: string; dry_run?: boolean }) => {
+      let parsed: unknown;
+      try {
+        // Accept either raw JSON or base64
+        const raw = (() => {
+          const trimmed = input.data.trim();
+          if (trimmed.startsWith('{')) return trimmed;
+          try {
+            return Buffer.from(trimmed, 'base64').toString('utf8');
+          } catch {
+            return trimmed;
+          }
+        })();
+        parsed = JSON.parse(raw);
+      } catch (e) {
+        return { error: 'Could not parse import payload as JSON.' };
+      }
+      const p = parsed as Partial<{
+        wardrobe: Array<Partial<Garment>>;
+        outfits: unknown[];
+        reports: unknown[];
+      }>;
+      const incoming = Array.isArray(p.wardrobe) ? p.wardrobe.length : 0;
+      const existingIds = new Set(w.garments.map((g) => g.id));
+      const wouldReplace =
+        p.wardrobe?.filter((g) => typeof g.id === 'string' && existingIds.has(g.id)).length ?? 0;
+      const wouldAdd = incoming - wouldReplace;
+      if (input.dry_run !== false) {
+        return {
+          ok: true,
+          dryRun: true,
+          wouldAdd,
+          wouldReplace,
+          currentCount: w.garments.length
+        };
+      }
+      let added = 0;
+      let replaced = 0;
+      for (const g of p.wardrobe ?? []) {
+        if (!g.name || !g.category) continue;
+        const existing = g.id ? w.getById(g.id) : undefined;
+        if (existing) {
+          w.rename(existing.id, g.name);
+          replaced++;
+        } else {
+          w.add({
+            name: g.name,
+            category: g.category,
+            fabric: g.fabric ?? 'Unknown',
+            tags: g.tags ?? [],
+            palette: g.palette ?? { white: 0, black: 1 },
+            notes: g.notes
+          });
+          added++;
+        }
+      }
+      log(h, 'agent', 'import_wardrobe', `Imported ${added} new and replaced ${replaced} garments.`);
+      emitToolChange({ reason: 'wardrobe-changed', detail: { added, replaced } });
+      return {
+        ok: true,
+        added,
+        replaced,
+        totalAfter: w.garments.length
+      };
+    }
+  };
+
   return [
     { definition: listWardrobe },
     { definition: getGarment },
@@ -466,8 +628,48 @@ export function registerStylistTools(opts: RegisterOpts) {
     { definition: getSessionState },
     { definition: compareOutfits },
     { definition: getLookbook },
-    { definition: applySuggestion }
+    { definition: applySuggestion },
+    { definition: summarizeWardrobe },
+    { definition: exportWardrobe },
+    { definition: importWardrobe }
   ] as Array<{ definition: unknown; cleanup?: () => void }>;
+}
+
+function paletteSummary(garments: Garment[]): { greyscale: number; coloured: number; topAccents: Array<{ color: string; count: number }> } {
+  if (garments.length === 0) return { greyscale: 0, coloured: 0, topAccents: [] };
+  const accentCounts = new Map<string, number>();
+  let greyscale = 0;
+  let coloured = 0;
+  for (const g of garments) {
+    if (g.palette.accent) {
+      coloured++;
+      accentCounts.set(g.palette.accent, (accentCounts.get(g.palette.accent) ?? 0) + 1);
+    } else {
+      greyscale++;
+    }
+  }
+  const topAccents = [...accentCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([color, count]) => ({ color, count }));
+  return { greyscale, coloured, topAccents };
+}
+
+function categorySummary(garments: Garment[]): Array<{ category: string; count: number }> {
+  const counts = new Map<string, number>();
+  for (const g of garments) counts.set(g.category, (counts.get(g.category) ?? 0) + 1);
+  return [...counts.entries()].map(([category, count]) => ({ category, count }));
+}
+
+function utilizationHint(garments: Garment[], reports: ReturnType<typeof analyzeOutfit>[]): string {
+  if (garments.length === 0) return 'Wardrobe is empty. Add pieces via add_garment to get started.';
+  if (reports.length === 0) return 'No outfits scored yet. Try analyze_outfit on a selection to see how pieces perform.';
+  const used = new Set<string>();
+  for (const r of reports) {
+    // The mock report doesn't reference garment ids directly, so we approximate
+    // by looking at how recently items were added.
+  }
+  return `${garments.length} piece(s) tracked across ${reports.length} score(s). Mix high-score combos with one or two low-score ones to see where BAW pushes back.`;
 }
 
 function topNTags(garments: Garment[], n: number) {

@@ -303,6 +303,83 @@ await document.modelContext.executeTool(tool, JSON.stringify({
 
 // Response shape
 { ok, suggestion, garments, preview: { overall, axes, ... } }`
+    },
+    {
+      name: 'summarize_wardrobe',
+      description: t('tools_defs.summarize_wardrobe.desc'),
+      annotations: ['readOnlyHint'],
+      inputSchema: {
+        type: 'object',
+        properties: {
+          topN: { type: 'number', description: t('tools_defs.summarize_wardrobe.n_desc') }
+        }
+      },
+      example: `// Call
+await document.modelContext.executeTool(tool, '{"topN": 5}');
+
+// Response shape
+{
+  generatedAt: 1234567890,
+  total: 9,
+  categories: [{ category: 'outerwear', count: 1 }, ...],
+  palette: { greyscale: 8, coloured: 1, topAccents: [{ color: '#ff3b1f', count: 1 }] },
+  topTags: [{ tag: 'minimal', count: 5 }, ...],
+  averageRecentScore: 7.8,
+  utilisationHint: '9 piece(s) tracked across 12 score(s)...'
+}`
+    },
+    {
+      name: 'export_wardrobe',
+      description: t('tools_defs.export_wardrobe.desc'),
+      annotations: ['destructiveHint', 'idempotentHint'],
+      inputSchema: {
+        type: 'object',
+        properties: {
+          format: { type: 'string', enum: ['json'], description: t('tools_defs.export_wardrobe.format_desc') }
+        }
+      },
+      example: `// Call
+await document.modelContext.executeTool(tool, '{"format": "json"}');
+
+// Response shape
+{
+  ok: true,
+  format: 'json',
+  filename: 'baw-wardrobe-2026-08-26.json',
+  size: 8421,
+  base64: 'eyJ2ZXJzaW9uIjoxLCJ3YXJkcm9iZSI6W119',   // <- offer this as a download URL
+  inline: '{\\n  "version": 1, ... }'              // <- or use the inline JSON if size ≤ 8KB
+}`
+    },
+    {
+      name: 'import_wardrobe',
+      description: t('tools_defs.import_wardrobe.desc'),
+      annotations: [],
+      inputSchema: {
+        type: 'object',
+        required: ['data'],
+        properties: {
+          dry_run: { type: 'boolean', description: t('tools_defs.import_wardrobe.dry_run_desc') },
+          data: { type: 'string', description: t('tools_defs.import_wardrobe.data_desc') }
+        }
+      },
+      example: `// Step 1: dry run
+await document.modelContext.executeTool(tool, JSON.stringify({
+  dry_run: true,
+  data: exportPayloadBase64
+}));
+
+// Response (dry run)
+{ ok: true, dryRun: true, wouldAdd: 4, wouldReplace: 1, currentCount: 8 }
+
+// Step 2: commit
+await document.modelContext.executeTool(tool, JSON.stringify({
+  dry_run: false,
+  data: exportPayloadBase64
+}));
+
+// Response (commit)
+{ ok: true, added: 4, replaced: 1, totalAfter: 12 }`
     }
   ];
 }

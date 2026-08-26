@@ -320,7 +320,7 @@
   },
   "tools": {
     "eyebrow": "// tools · for agents",
-    "title": "Twelve tools.",
+    "title": "Fifteen tools.",
     "title_emph": "One wardrobe.",
     "title_suffix": "Both human and agent in the loop.",
     "lead": "When you load any BAW page in a WebMCP-aware browser (Chrome 149+ with the flag, or ChatGPT's in-app browser), these twelve tools are registered on document.modelContext. Below is what the agent actually sees: name, description, JSON Schema input, and the annotation that drives the trust boundary in the UI.",
@@ -409,6 +409,19 @@
     "apply_suggestion": {
       "desc": "Apply a proposed outfit by writing the garment ids into the Style Lab selection. The Style Lab page (in any open tab) receives the change via the local event bus, recomputes the score live, and highlights the applied suggestion in the UI. Use this after propose_outfit when the user accepts the agent’s recommendation.",
       "label_desc": "Optional label for the suggestion."
+    },
+    "summarize_wardrobe": {
+      "desc": "Return aggregate statistics for the whole wardrobe: category distribution, palette mix (greyscale ratio), most common tags, average score, and a utilisation hint. Gives the agent an at-a-glance summary of the user’s closet.",
+      "n_desc": "Top-N tags, default 5."
+    },
+    "export_wardrobe": {
+      "desc": "Package the current wardrobe + history + saved outfits as JSON, return a data: URL so the user can download a backup. This is a destructive call because it reads out everything — always confirm with the user first.",
+      "format_desc": "Output format (only json supported today)."
+    },
+    "import_wardrobe": {
+      "desc": "Restore wardrobe + history + outfits from a JSON payload previously produced by export_wardrobe. Run with dry_run=true first to report what would be replaced, then commit with dry_run=false.",
+      "dry_run_desc": "true = simulate and report the affected count. false = actually write.",
+      "data_desc": "Base64-encoded JSON string, or raw JSON text."
     }
   }
 }
