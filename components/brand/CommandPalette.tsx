@@ -42,6 +42,12 @@ const CMDS: Cmd[] = [
     run: (r) => r.push('/privacy')
   },
   {
+    id: 'tools',
+    label: 'Tools for agents',
+    hint: 'T',
+    run: (r) => r.push('/tools')
+  },
+  {
     id: 'lookbook',
     label: 'Lookbook',
     hint: 'B',

@@ -7,7 +7,7 @@ const links = [
   { href: '/how', label: 'How it works' },
   { href: '/stylelab', label: 'Style Lab' },
   { href: '/stylist', label: 'Pair Stylist' },
-  { href: '/privacy', label: 'Privacy' },
+  { href: '/tools', label: 'Tools' },
   { href: '/lookbook', label: 'Lookbook' },
   { href: '/pricing', label: 'Pricing' }
 ];
