@@ -362,5 +362,53 @@
     "home": "Home",
     "lab": "Style Lab",
     "stylist": "Pair Stylist"
+  },
+  "tools_defs": {
+    "list_wardrobe": {
+      "desc": "Return the user’s full wardrobe. Call this first when you need to know what they own before proposing an outfit, comparing looks, or explaining why a particular combination works.",
+      "cat_desc": "Optional: only return garments of this category.",
+      "id_desc": "The garment id returned by list_wardrobe."
+    },
+    "get_garment": {
+      "desc": "Fetch a single garment by its id, including fabric, palette mix, and notes. Use this after list_wardrobe when you need the full detail of one piece."
+    },
+    "add_garment": {
+      "desc": "Add a new garment to the wardrobe. Required: name, category, fabric. Optional: tags, palette mix (defaults to black), notes. The wardrobe is local-only; nothing leaves the browser.",
+      "white_desc": "0..1 share of white in the palette.",
+      "black_desc": "0..1 share of black in the palette.",
+      "notes_desc": "Optional notes."
+    },
+    "remove_garment": {
+      "desc": "Permanently remove a garment from the wardrobe. This is destructive and cannot be undone in the demo. Always confirm with the human first."
+    },
+    "analyze_outfit": {
+      "desc": "Score a set of garments on the four BAW axes — silhouette, palette, texture, occasion fit — and return an overall score 0-10 plus per-axis comments. Call this when the user asks “how does this look” or when proposing a combination they should consider.",
+      "ids_desc": "Garment ids that make up the outfit. The enum is rebuilt from the live wardrobe on every call — you cannot reference a piece the user has removed.",
+      "occasion_desc": "Optional occasion context."
+    },
+    "propose_outfit": {
+      "desc": "Generate a proposed outfit combination from the wardrobe for a given occasion and season. Returns the chosen garment ids and a one-line rationale. Call this when the user asks for a recommendation (\"what should I wear for X?\").",
+      "focus_desc": "Optional style focus."
+    },
+    "save_outfit": {
+      "desc": "Persist a proposed outfit to the user’s outfit history so it shows up in the lookbook and can be referenced later.",
+      "notes_desc": "Optional notes."
+    },
+    "list_history": {
+      "desc": "Return the most recent N entries from the user’s session history — a mix of human actions, agent calls, and system events. Use this to ground your suggestions in what just happened (\"you added X two minutes ago...\")."
+    },
+    "get_session_state": {
+      "desc": "Snapshot the current BAW session: how many garments, how many saved outfits, how many reports, the most recent activity. Use this at the start of a turn to orient yourself without burning multiple read calls."
+    },
+    "compare_outfits": {
+      "desc": "Score two outfits side by side on the same four axes and return a winner. Use this when the user is choosing between two specific combinations."
+    },
+    "get_lookbook": {
+      "desc": "Return the user’s saved looks from the lookbook. Each entry includes the label, the garment ids, the occasion and season, and the predicted score (if analyze_outfit was run before saving). Use this to reference past looks when proposing something new."
+    },
+    "apply_suggestion": {
+      "desc": "Apply a proposed outfit by writing the garment ids into the Style Lab selection. The Style Lab page (in any open tab) receives the change via the local event bus, recomputes the score live, and highlights the applied suggestion in the UI. Use this after propose_outfit when the user accepts the agent’s recommendation.",
+      "label_desc": "Optional label for the suggestion."
+    }
   }
 }

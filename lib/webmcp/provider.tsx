@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { useWardrobeStore } from '@/lib/store/wardrobe';
 import { useHistoryStore } from '@/lib/store/history';
 import { registerStylistTools } from './tools';
@@ -22,35 +23,39 @@ declare global {
 
 /**
  * Mounts once at the root. Registers all BAW WebMCP tools on the
- * active `document.modelContext` and wires up `toolchange` event
- * propagation through the app.
+ * active `document.modelContext` and re-registers when the user
+ * switches locale, so the agent always sees descriptions in the
+ * same language the user does. Tool change events are propagated
+ * through the in-app bus for the Pair Stylist to react to.
  */
 export function WebMCPProvider() {
-  const registeredRef = useRef(false);
+  const t = useTranslations();
+  const locale = useLocale();
+  const registeredRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
-    if (registeredRef.current) return;
-    if (!('modelContext' in document) || !document.modelContext) {
-      // No WebMCP runtime in this browser yet (Chrome 149+ / ChatGPT in-app).
-      // Tools are still discoverable through the in-app UI for agents.
-      return;
-    }
-    registeredRef.current = true;
+    if (!('modelContext' in document) || !document.modelContext) return;
+    if (registeredRef.current === locale) return;
+
     const controller = new AbortController();
     const tools = registerStylistTools({
       wardrobe: useWardrobeStore.getState(),
-      history: useHistoryStore.getState()
+      history: useHistoryStore.getState(),
+      // Bind a translator that always reads the *current* locale's dictionary
+      // — not the closure locale — so any future locale switch inside this
+      // effect re-resolves correctly.
+      t: (key: string) => t(key as Parameters<typeof t>[0])
     });
     const cleanups: Array<() => void> = [];
-    for (const t of tools) {
-      document.modelContext!.registerTool(t.definition, { signal: controller.signal }).catch(() => {});
-      if (t.cleanup) cleanups.push(t.cleanup);
+    for (const tool of tools) {
+      document.modelContext!.registerTool(tool.definition, { signal: controller.signal }).catch(() => {});
+      if (tool.cleanup) cleanups.push(tool.cleanup);
     }
+    registeredRef.current = locale;
 
-    // Wire toolchange to local bus
     const listener: ToolChangeListener = () => {
-      // For now this is a no-op stub — richer reactive UI lives in /stylist.
+      // Pair Stylist reads via the bus directly.
     };
     const unsub = onToolChange(listener);
     cleanups.push(unsub);
@@ -58,8 +63,9 @@ export function WebMCPProvider() {
     return () => {
       controller.abort();
       for (const fn of cleanups) fn();
+      registeredRef.current = null;
     };
-  }, []);
+  }, [locale, t]);
 
   return null;
 }

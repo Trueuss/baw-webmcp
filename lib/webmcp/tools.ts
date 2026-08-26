@@ -1,11 +1,11 @@
 /**
- * The 8 BAW WebMCP tools registered with `document.modelContext`.
+ * The 12 BAW WebMCP tools registered with `document.modelContext`.
  *
  * Every tool uses imperative WebMCP (`registerTool`) — we deliberately
  * do NOT use a polyfill so the demo runs against the real browser API.
- * The descriptions are written for agents: they explain WHEN to call the
- * tool, what it returns, and what to do with the result. That's the
- * highest-leverage thing in WebMCP, and the one judges notice first.
+ * Descriptions, annotations and inputSchema hints are read from the
+ * i18n dictionary at registration time, so the agent always sees the
+ * same locale the user does.
  *
  * Reactive schemas: `analyze_outfit` and `propose_outfit` rebuild their
  * `garmentIds` enums from the live wardrobe store. The `getTools()`
@@ -41,9 +41,12 @@ type HistoryHandle = {
   saveOutfit: (o: { label: string; garmentIds: string[]; occasion: Occasion; season: Season; notes?: string }) => { id: string };
 };
 
+export type Translator = (key: string) => string;
+
 interface RegisterOpts {
   wardrobe: StoreHandle;
   history: HistoryHandle;
+  t: Translator;
 }
 
 const CATEGORIES: GarmentCategory[] = [
@@ -71,15 +74,10 @@ function summarise(g: Garment) {
   };
 }
 
-function pickByRule(handle: StoreHandle, opts: {
-  occasion?: Occasion;
-  season?: Season;
-  preferCategories?: GarmentCategory[];
-}): Garment[] {
-  // A small heuristic: pick a top, a bottom, a shoe, an optional outerwear.
+function pickByRule(handle: StoreHandle, opts: { occasion?: Occasion; focus?: string }) {
   const owned = handle.garments;
   if (owned.length === 0) return [];
-  const pick = (cat: GarmentCategory) => owned.find((g) => g.category === cat);
+  const pick = (cat: string) => owned.find((g) => g.category === cat);
   const chosen: Garment[] = [];
   const seen = new Set<string>();
   const push = (g?: Garment) => {
@@ -88,26 +86,30 @@ function pickByRule(handle: StoreHandle, opts: {
       chosen.push(g);
     }
   };
-  for (const cat of opts.preferCategories ?? ['outerwear', 'top', 'bottom', 'shoe', 'accessory']) {
+  for (const cat of ['outerwear', 'top', 'bottom', 'shoe', 'accessory']) {
     push(pick(cat));
+  }
+  // Filter by focus if requested
+  if (opts.focus) {
+    const focused = chosen.filter((g) => g.tags.includes(opts.focus as Garment['tags'][number]));
+    return focused.length > 0 ? focused : chosen;
   }
   return chosen;
 }
 
 export function registerStylistTools(opts: RegisterOpts) {
-  const { wardrobe: w, history: h } = opts;
+  const { wardrobe: w, history: h, t } = opts;
 
   const listWardrobe = {
     name: 'list_wardrobe',
-    description:
-      'Return the user\u2019s full wardrobe. Call this first when you need to know what they own before proposing an outfit, comparing looks, or explaining why a particular combination works.',
+    description: t('tools_defs.list_wardrobe.desc'),
     inputSchema: {
       type: 'object',
       properties: {
         category: {
           type: 'string',
           enum: CATEGORIES,
-          description: 'Optional: only return garments of this category.'
+          description: t('tools_defs.list_wardrobe.cat_desc')
         }
       }
     },
@@ -126,13 +128,12 @@ export function registerStylistTools(opts: RegisterOpts) {
 
   const getGarment = {
     name: 'get_garment',
-    description:
-      'Fetch a single garment by its id, including fabric, palette mix, and notes. Use this after list_wardrobe when you need the full detail of one piece.',
+    description: t('tools_defs.get_garment.desc'),
     inputSchema: {
       type: 'object',
       required: ['id'],
       properties: {
-        id: { type: 'string', description: 'The garment id returned by list_wardrobe.' }
+        id: { type: 'string', description: t('tools_defs.list_wardrobe.id_desc') }
       }
     },
     annotations: { readOnlyHint: true },
@@ -145,8 +146,7 @@ export function registerStylistTools(opts: RegisterOpts) {
 
   const addGarment = {
     name: 'add_garment',
-    description:
-      'Add a new garment to the wardrobe. Required: name, category, fabric. Optional: tags, palette mix (defaults to black), notes. The wardrobe is local-only; nothing leaves the browser.',
+    description: t('tools_defs.add_garment.desc'),
     inputSchema: {
       type: 'object',
       required: ['name', 'category', 'fabric'],
@@ -155,9 +155,9 @@ export function registerStylistTools(opts: RegisterOpts) {
         category: { type: 'string', enum: CATEGORIES },
         fabric: { type: 'string' },
         tags: { type: 'array', items: { type: 'string', enum: TAGS } },
-        white: { type: 'number', description: '0..1 share of white in the palette.' },
-        black: { type: 'number', description: '0..1 share of black in the palette.' },
-        notes: { type: 'string' }
+        white: { type: 'number', description: t('tools_defs.add_garment.white_desc') },
+        black: { type: 'number', description: t('tools_defs.add_garment.black_desc') },
+        notes: { type: 'string', description: t('tools_defs.add_garment.notes_desc') }
       }
     },
     execute: async (input: {
@@ -185,8 +185,7 @@ export function registerStylistTools(opts: RegisterOpts) {
 
   const removeGarment = {
     name: 'remove_garment',
-    description:
-      'Permanently remove a garment from the wardrobe. This is destructive and cannot be undone in the demo. Always confirm with the human first.',
+    description: t('tools_defs.remove_garment.desc'),
     inputSchema: {
       type: 'object',
       required: ['id'],
@@ -205,8 +204,7 @@ export function registerStylistTools(opts: RegisterOpts) {
 
   const analyzeOutfitTool = {
     name: 'analyze_outfit',
-    description:
-      'Score a set of garments on the four BAW axes \u2014 silhouette, palette, texture, occasion fit \u2014 and return an overall score 0-10 plus per-axis comments. Call this when the user asks "how does this look" or when proposing a combination they should consider.',
+    description: t('tools_defs.analyze_outfit.desc'),
     inputSchema: {
       type: 'object',
       required: ['garmentIds'],
@@ -214,9 +212,9 @@ export function registerStylistTools(opts: RegisterOpts) {
         garmentIds: {
           type: 'array',
           items: { type: 'string', enum: w.garments.map((g) => g.id) },
-          description: 'Garment ids that make up the outfit. Use list_wardrobe to discover ids.'
+          description: t('tools_defs.analyze_outfit.ids_desc')
         },
-        occasion: { type: 'string', enum: OCCASIONS }
+        occasion: { type: 'string', enum: OCCASIONS, description: t('tools_defs.analyze_outfit.occasion_desc') }
       }
     },
     annotations: { readOnlyHint: true },
@@ -237,8 +235,7 @@ export function registerStylistTools(opts: RegisterOpts) {
 
   const proposeOutfit = {
     name: 'propose_outfit',
-    description:
-      'Generate a proposed outfit combination from the wardrobe for a given occasion and season. Returns the chosen garment ids and a one-line rationale. Call this when the user asks for a recommendation ("what should I wear for X?").',
+    description: t('tools_defs.propose_outfit.desc'),
     inputSchema: {
       type: 'object',
       required: ['occasion', 'season'],
@@ -248,26 +245,25 @@ export function registerStylistTools(opts: RegisterOpts) {
         focus: {
           type: 'string',
           enum: ['minimal', 'classic', 'streetwear', 'workwear', 'avant-garde'],
-          description: 'Optional style focus.'
+          description: t('tools_defs.propose_outfit.focus_desc')
         }
       }
     },
     annotations: { readOnlyHint: true },
     execute: async (input: { occasion: Occasion; season: Season; focus?: string }) => {
-      const chosen = pickByRule(w, { occasion: input.occasion, season: input.season });
+      const chosen = pickByRule(w, { occasion: input.occasion, focus: input.focus });
       if (chosen.length === 0) {
         return { error: 'The wardrobe is empty. Ask the user to add some garments first.' };
       }
       const report = analyzeOutfit(chosen, { occasion: input.occasion });
-      const suggestion = {
+      const suggestion: StylistSuggestion = {
         id: `sg_${Math.random().toString(36).slice(2, 10)}`,
-        type: 'propose' as const,
-        outfitId: undefined,
+        type: 'propose',
         message: `For ${input.occasion} in ${input.season}: ${chosen
           .map((g) => g.name)
           .join(' \u00b7 ')}. Predicted score ${report.overall}/10.`,
         createdAt: Date.now(),
-        status: 'open' as const
+        status: 'open'
       };
       h.addEntry({ source: 'agent', tool: 'propose_outfit', message: suggestion.message });
       emitToolChange({ reason: 'suggestion', detail: suggestion });
@@ -281,8 +277,7 @@ export function registerStylistTools(opts: RegisterOpts) {
 
   const saveOutfit = {
     name: 'save_outfit',
-    description:
-      'Persist a proposed outfit to the user\u2019s outfit history so it shows up in the lookbook and can be referenced later.',
+    description: t('tools_defs.save_outfit.desc'),
     inputSchema: {
       type: 'object',
       required: ['label', 'garmentIds', 'occasion', 'season'],
@@ -294,7 +289,7 @@ export function registerStylistTools(opts: RegisterOpts) {
         },
         occasion: { type: 'string', enum: OCCASIONS },
         season: { type: 'string', enum: SEASONS },
-        notes: { type: 'string' }
+        notes: { type: 'string', description: t('tools_defs.save_outfit.notes_desc') }
       }
     },
     execute: async (input: {
@@ -319,8 +314,7 @@ export function registerStylistTools(opts: RegisterOpts) {
 
   const listHistory = {
     name: 'list_history',
-    description:
-      'Return the most recent N entries from the user\u2019s session history \u2014 a mix of human actions, agent calls, and system events. Use this to ground your suggestions in what just happened ("you added X two minutes ago...").',
+    description: t('tools_defs.list_history.desc'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -336,8 +330,7 @@ export function registerStylistTools(opts: RegisterOpts) {
 
   const getSessionState = {
     name: 'get_session_state',
-    description:
-      'Snapshot the current BAW session: how many garments, how many saved outfits, how many reports, the most recent activity. Use this at the start of a turn to orient yourself without burning multiple read calls.',
+    description: t('tools_defs.get_session_state.desc'),
     inputSchema: { type: 'object', properties: {} },
     annotations: { readOnlyHint: true },
     execute: async () => ({
@@ -352,8 +345,7 @@ export function registerStylistTools(opts: RegisterOpts) {
 
   const compareOutfits = {
     name: 'compare_outfits',
-    description:
-      'Score two outfits side by side on the same four axes and return a winner. Use this when the user is choosing between two specific combinations.',
+    description: t('tools_defs.compare_outfits.desc'),
     inputSchema: {
       type: 'object',
       required: ['a', 'b'],
@@ -394,8 +386,7 @@ export function registerStylistTools(opts: RegisterOpts) {
 
   const getLookbook = {
     name: 'get_lookbook',
-    description:
-      'Return the user\u2019s saved looks from the lookbook. Each entry includes the label, the garment ids, the occasion and season, and the predicted score (if analyze_outfit was run before saving). Use this to reference past looks when proposing something new.',
+    description: t('tools_defs.get_lookbook.desc'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -428,8 +419,7 @@ export function registerStylistTools(opts: RegisterOpts) {
 
   const applySuggestion = {
     name: 'apply_suggestion',
-    description:
-      'Apply a proposed outfit by writing the garment ids into the Style Lab selection. The Style Lab page (in any open tab) receives the change via the local event bus, recomputes the score live, and highlights the applied suggestion in the UI. Use this after propose_outfit when the user accepts the agent\u2019s recommendation.',
+    description: t('tools_defs.apply_suggestion.desc'),
     inputSchema: {
       type: 'object',
       required: ['garmentIds'],
@@ -438,7 +428,7 @@ export function registerStylistTools(opts: RegisterOpts) {
           type: 'array',
           items: { type: 'string', enum: w.garments.map((g) => g.id) }
         },
-        label: { type: 'string' }
+        label: { type: 'string', description: t('tools_defs.apply_suggestion.label_desc') }
       }
     },
     execute: async (input: { garmentIds: string[]; label?: string }) => {

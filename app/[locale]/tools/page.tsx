@@ -1,24 +1,34 @@
 import Link from 'next/link';
-import { TOOL_DOCS } from '@/lib/webmcp/docs';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { getToolDocs, type ToolDoc } from '@/lib/webmcp/docs';
 
 export const metadata = {
   title: 'Tools for agents',
-  description: 'The 10 WebMCP tools BAW exposes to any agent, with their full JSON Schema input and runtime annotations.'
+  description: 'The 12 WebMCP tools BAW exposes to any agent, with their full JSON Schema input and runtime annotations.'
 };
 
-export default function ToolsPage() {
+type T = Awaited<ReturnType<typeof getTranslations>>;
+
+export default async function ToolsPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations({ locale });
+  const tBind = (key: string) => t(key as Parameters<typeof t>[0]);
+  const docs = getToolDocs(tBind);
+  return <ToolsPageInner docs={docs} t={t} tBind={tBind} />;
+}
+
+function ToolsPageInner({ docs, t, tBind }: { docs: ToolDoc[]; t: T; tBind: (key: string) => string }) {
   return (
     <main className="container-x" style={{ paddingTop: 140, paddingBottom: 120 }}>
-      <div className="eyebrow" style={{ marginBottom: 24 }}>// tools · for agents</div>
+      <div className="eyebrow" style={{ marginBottom: 24 }}>{tBind('tools.eyebrow')}</div>
       <h1 style={{ fontSize: 'clamp(56px, 9vw, 120px)', maxWidth: 900 }}>
-        Ten tools. <em>One wardrobe.</em> Both human and agent in the loop.
+        {tBind('tools.title')}{' '}
+        <em>{tBind('tools.title_emph')}</em>{' '}
+        {tBind('tools.title_suffix')}
       </h1>
       <p style={{ color: 'var(--muted)', fontSize: 18, maxWidth: 720, marginTop: 24 }}>
-        When you load any BAW page in a WebMCP-aware browser (Chrome 149+ with
-        the flag, or ChatGPT&rsquo;s in-app browser), these ten tools are
-        registered on <code>document.modelContext</code>. Below is what the
-        agent actually sees: name, description, JSON Schema input, and the
-        annotation that drives the trust boundary in the UI.
+        {tBind('tools.lead')}
       </p>
 
       <div
@@ -32,14 +42,11 @@ export default function ToolsPage() {
           fontSize: 13
         }}
       >
-        <span style={{ color: 'var(--accent)' }}>$</span>{' '}
-        await document.modelContext.getTools() <br />
-        <span style={{ opacity: 0.5 }}>→ </span>
-        <span style={{ color: '#6ed27e' }}>[ 10 tools · all with descriptions and JSON Schema ]</span>
+        <span style={{ color: 'var(--accent)' }}>$</span> {tBind('tools.snippet')}
       </div>
 
       <div style={{ marginTop: 64, display: 'grid', gap: 32 }}>
-        {TOOL_DOCS.map((doc) => (
+        {docs.map((doc) => (
           <article
             key={doc.name}
             style={{
@@ -172,32 +179,26 @@ export default function ToolsPage() {
         }}
       >
         <h2 style={{ color: 'var(--paper)', fontSize: 'clamp(36px, 5vw, 64px)' }}>
-          How to drive them from a real agent
+          {tBind('tools.driver_title')}
         </h2>
         <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
           <div>
-            <div className="eyebrow" style={{ color: 'var(--muted-2)' }}>From Chrome 149+</div>
+            <div className="eyebrow" style={{ color: 'var(--muted-2)' }}>{tBind('tools.driver_chrome_label')}</div>
             <p style={{ marginTop: 12, color: '#cfcfcf', lineHeight: 1.7 }}>
-              Open <code style={{ background: '#1a1a1a', padding: '2px 6px', borderRadius: 4 }}>chrome://flags/#enable-webmcp-testing</code>,
-              enable the flag, and reload. Open any BAW page; the tools are
-              now visible to the in-browser Gemini. The Inspector extension
-              lets you watch calls live.
+              {tBind('tools.driver_chrome_body')}
             </p>
           </div>
           <div>
-            <div className="eyebrow" style={{ color: 'var(--muted-2)' }}>From ChatGPT</div>
+            <div className="eyebrow" style={{ color: 'var(--muted-2)' }}>{tBind('tools.driver_chatgpt_label')}</div>
             <p style={{ marginTop: 12, color: '#cfcfcf', lineHeight: 1.7 }}>
-              Open any BAW page from inside <code style={{ background: '#1a1a1a', padding: '2px 6px', borderRadius: 4 }}>chatgpt.com</code>.
-              WebMCP is on by default. Ask the model: &ldquo;Propose an outfit
-              from my BAW wardrobe for a creative Monday&rdquo; — it will
-              call the right tool.
+              {tBind('tools.driver_chatgpt_body')}
             </p>
           </div>
         </div>
         <div style={{ marginTop: 32, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <Link href="/stylelab" className="btn btn-accent">Try the Style Lab →</Link>
+          <Link href="/stylelab" className="btn btn-accent">{tBind('tools.cta_lab')}</Link>
           <Link href="/stylist" className="btn btn-ghost" style={{ color: 'var(--paper)', borderColor: '#3a3a3a' }}>
-            Open the Pair Stylist
+            {tBind('tools.cta_stylist')}
           </Link>
         </div>
       </section>
