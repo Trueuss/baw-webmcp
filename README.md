@@ -4,7 +4,9 @@
 
 This repository contains a submission to [The WebMCP Challenge](https://webmcp.devpost.com/) (Devpost, deadline **Sep 3, 2026**). It extends a hand-crafted product demo — *BAW* — with 12 native WebMCP tools, a "Pair Stylist" cross-tool copilot, and reactive schemas that change as the wardrobe changes.
 
-**Repository:** [github.com/Trueuss/baw-webmcp](https://github.com/Trueuss/baw-webmcp) · **Live demo:** deploy with the one-click Vercel button below.
+**Repository:** [github.com/Trueuss/baw-webmcp](https://github.com/Trueuss/baw-webmcp) · **Live demo:** one-click deploy below.
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FTrueuss%2Fbaw-webmcp&project-name=baw-webmcp&repository-name=baw-webmcp)
 
 ![BAW home](public/demo/06-home-fold.png)
 

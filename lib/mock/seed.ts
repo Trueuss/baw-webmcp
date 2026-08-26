@@ -81,6 +81,36 @@ export function seedGarments(): Garment[] {
       fabric: '925 silver, 2mm',
       notes: 'The 5% pop the lookbook keeps promising.',
       createdAt: Date.now() - 1000 * 60 * 60 * 24 * 1
+    },
+    {
+      id: 'g_cream_cardigan',
+      name: 'Cream cashmere cardigan',
+      category: 'top',
+      tags: ['minimal', 'classic', 'romantic'],
+      palette: { white: 0.93, black: 0.07 },
+      fabric: 'Cashmere 12gg',
+      notes: 'Soft drape. Layering essential for cool spring days.',
+      createdAt: Date.now() - 1000 * 60 * 60 * 24 * 18
+    },
+    {
+      id: 'g_wool_overcoat',
+      name: 'Charcoal wool overcoat',
+      category: 'outerwear',
+      tags: ['minimal', 'classic', 'tailored'],
+      palette: { white: 0.1, black: 0.9 },
+      fabric: 'Wool 480gsm, half-canvas',
+      notes: 'Single-breasted. The silhouette anchor of winter.',
+      createdAt: Date.now() - 1000 * 60 * 60 * 24 * 30
+    },
+    {
+      id: 'g_stripe_blazer',
+      name: 'Stripe contrast blazer',
+      category: 'outerwear',
+      tags: ['tailored', 'avant-garde', 'classic'],
+      palette: { white: 0.5, black: 0.5 },
+      fabric: 'Wool 280gsm, chalk stripe',
+      notes: 'The 5% rule, woven in. Save for the evening edit.',
+      createdAt: Date.now() - 1000 * 60 * 60 * 24 * 45
     }
   ];
 }
