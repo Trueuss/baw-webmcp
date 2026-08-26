@@ -1,6 +1,15 @@
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { setRequestLocale } from 'next-intl/server';
+import { Link } from '@/i18n/routing';
 
-export const metadata = { title: 'Lookbook' };
+const TAG_COLORS: Record<string, string> = {
+  'minimal': '#2a2a2a',
+  'creative': '#1c6b34',
+  'business-casual': '#0a3d62',
+  'casual': '#9a7b1f',
+  'formal': '#5a1f1f',
+  'biz-casual': '#0a3d62'
+};
 
 const LOOKS = [
   { id: '042', name: 'oversized blazer · cropped trouser · white leather sneaker', score: 9.2, items: 'FLATLAY · 3 ITEMS', tag: 'creative' },
@@ -21,25 +30,23 @@ const LOOKS = [
   { id: '159', name: 'white oxford · cropped trouser · white sneaker', score: 7.9, items: 'WEEKEND', tag: 'casual' }
 ];
 
-const TAG_COLORS: Record<string, string> = {
-  'minimal': '#2a2a2a',
-  'creative': '#1c6b34',
-  'business-casual': '#0a3d62',
-  'casual': '#9a7b1f',
-  'formal': '#5a1f1f'
-};
+export default async function Lookbook({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  return <LookbookInner />;
+}
 
-export default function Lookbook() {
+function LookbookInner() {
+  const t = useTranslations('lookbook');
   return (
     <main className="container-x" style={{ paddingTop: 140, paddingBottom: 120 }}>
-      <div className="eyebrow" style={{ marginBottom: 24 }}>// 05 · lookbook</div>
+      <div className="eyebrow" style={{ marginBottom: 24 }}>{t('eyebrow')}</div>
       <h1 style={{ fontSize: 'clamp(56px, 9vw, 120px)', maxWidth: 900 }}>
-        A style diary, <em>written in black &amp; white.</em>
+        {t('title')}{' '}
+        <em>{t('title_emph')}</em>
       </h1>
       <p style={{ color: 'var(--muted)', fontSize: 18, maxWidth: 640, marginTop: 24 }}>
-        Every look below was scored by the on-device model. The first eight
-        are the showcase; the rest are added by the community through
-        <code> save_outfit</code> via WebMCP.
+        {t('lead')}
       </p>
 
       <div className="showcase-grid" style={{ marginTop: 64 }}>
@@ -74,14 +81,15 @@ export default function Lookbook() {
 
       <div style={{ marginTop: 96, padding: 40, background: 'var(--paper-2)', borderRadius: 'var(--radius-lg)', textAlign: 'center' }}>
         <h2 style={{ fontSize: 'clamp(36px, 5vw, 56px)' }}>
-          Your wardrobe is the <em>real</em> lookbook.
+          {t('bottom_title')}{' '}
+          <em>{t('bottom_title_emph')}</em>{' '}
+          {t('bottom_title_suffix')}
         </h2>
         <p style={{ color: 'var(--muted)', maxWidth: 520, margin: '20px auto 0' }}>
-          Add your pieces, score an outfit, and start your own diary. The lookbook
-          below will keep growing as you do.
+          {t('bottom_blurb')}
         </p>
         <Link href="/stylelab" className="btn btn-primary" style={{ marginTop: 24 }}>
-          Open the Style Lab →
+          {t('bottom_cta')}
         </Link>
       </div>
     </main>

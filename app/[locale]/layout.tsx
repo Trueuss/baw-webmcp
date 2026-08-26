@@ -1,11 +1,15 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, Instrument_Serif, JetBrains_Mono } from 'next/font/google';
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
+import { notFound } from 'next/navigation';
 import { WebMCPBanner } from '@/components/brand/WebMCPBanner';
 import { Nav } from '@/components/brand/Nav';
 import { Footer } from '@/components/brand/Footer';
 import { CommandPalette } from '@/components/brand/CommandPalette';
 import { WebMCPProvider } from '@/lib/webmcp/provider';
-import './globals.css';
+import { routing } from '@/i18n/routing';
+import '../globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 const instrumentSerif = Instrument_Serif({
@@ -45,7 +49,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'BAW · Pair Stylist — A privacy-first AI stylist for humans and agents.',
     description:
-      'A privacy-first AI stylist that lives in your browser. 10 WebMCP tools let any agent collaborate with you on what you wear.',
+      'A privacy-first AI stylist that lives in your browser. 12 WebMCP tools let any agent collaborate with you on what you wear.',
     type: 'website',
     siteName: 'BAW',
     images: [
@@ -69,19 +73,49 @@ export const viewport: Viewport = {
   themeColor: '#0a0a0a'
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
+
+export default async function RootLayout({
+  children,
+  params
+}: {
+  children: React.ReactNode;
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  if (!routing.locales.includes(locale as (typeof routing.locales)[number])) {
+    notFound();
+  }
+  setRequestLocale(locale);
+  const messages = await getMessages();
+  const t = await getTranslations({ locale, namespace: 'nav' });
+  const navLabels = {
+    home: t('home'),
+    how: t('how'),
+    stylelab: t('stylelab'),
+    stylist: t('stylist'),
+    tools: t('tools'),
+    lookbook: t('lookbook'),
+    pricing: t('pricing'),
+    try_demo: t('try_demo')
+  };
+
   return (
     <html
-      lang="en"
+      lang={locale}
       className={`${inter.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable}`}
     >
       <body>
-        <WebMCPProvider />
-        <WebMCPBanner />
-        <Nav />
-        <CommandPalette />
-        {children}
-        <Footer />
+        <NextIntlClientProvider messages={messages} locale={locale}>
+          <WebMCPProvider />
+          <WebMCPBanner />
+          <Nav labels={navLabels} locale={locale} />
+          <CommandPalette />
+          {children}
+          <Footer />
+        </NextIntlClientProvider>
       </body>
     </html>
   );

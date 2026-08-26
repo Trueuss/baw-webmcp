@@ -1,21 +1,30 @@
-import Link from 'next/link';
+import { Link } from '@/i18n/routing';
+import { getTranslations } from 'next-intl/server';
 
-export function Footer() {
+export async function Footer() {
+  const t = await getTranslations('footer');
   return (
     <footer className="foot">
       <div className="container-x">
         <div className="foot-big">
-          Black. White. <em>You.</em>
+          {t('intro').includes('You') ? (
+            <>
+              Black. White. <em>You.</em>
+            </>
+          ) : (
+            <>{t('intro')}</>
+          )}
         </div>
         <div className="foot-meta">
           <div>
-            BAW · Black and White. Dressed by intelligence. <br />
-            Built for the WebMCP Challenge 2026.
+            {t('intro')}
+            <br />
+            {t('subtitle')}
           </div>
           <div>
-            v0.1.0 · private beta ·{' '}
+            {t('version')} ·{' '}
             <Link href="/stylelab" style={{ textDecoration: 'underline' }}>
-              try the demo
+              {t('try')}
             </Link>
           </div>
         </div>

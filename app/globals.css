@@ -137,6 +137,12 @@
   }
   .nav-cta:hover { background: var(--ink-soft); }
 
+  .nav-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+
   @media (max-width: 720px) {
     .nav-links { display: none; }
   }
@@ -861,6 +867,43 @@
   .tool-pill .dot {
     width: 6px; height: 6px; border-radius: 50%;
     background: var(--accent);
+  }
+}
+
+/* ===========================================================
+   Locale switcher
+   =========================================================== */
+@layer components {
+  .locale-switcher {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .locale-switcher button {
+    font-family: var(--font-jetbrains-mono), monospace;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    padding: 4px 9px;
+    border-radius: 999px;
+    transition: color 0.12s ease, background 0.12s ease;
+    line-height: 1;
+  }
+  .locale-switcher button:hover:not([data-active="true"]) {
+    color: var(--ink);
+  }
+  .locale-switcher button[data-active="true"] {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .locale-switcher button:disabled {
+    cursor: default;
   }
 }
 

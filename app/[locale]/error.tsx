@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 
 export default function ErrorBoundary({
@@ -10,18 +11,18 @@ export default function ErrorBoundary({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useTranslations('error');
   useEffect(() => {
-    // In production you would log this to your error reporting service.
-    // For the demo we log to console so judges can see the trace.
     // eslint-disable-next-line no-console
     console.error('BAW route error', error);
   }, [error]);
 
   return (
     <main className="container-x" style={{ paddingTop: 140, paddingBottom: 120, textAlign: 'center' }}>
-      <div className="eyebrow" style={{ marginBottom: 24 }}>// 503 · something tore</div>
+      <div className="eyebrow" style={{ marginBottom: 24 }}>{t('eyebrow')}</div>
       <h1 style={{ fontSize: 'clamp(56px, 9vw, 120px)' }}>
-        The look didn&rsquo;t <em>land</em>.
+        {t('title')}{' '}
+        <em>{t('title_emph')}</em>
       </h1>
       <p
         style={{
@@ -32,20 +33,16 @@ export default function ErrorBoundary({
           lineHeight: 1.6
         }}
       >
-        An exception bubbled up while rendering this page. The wardrobe is
-        still safe — local data, no upload — but the route needs another go.
+        {t('body')}
       </p>
       {error.digest && (
-        <p
-          className="mono"
-          style={{ marginTop: 18, fontSize: 12, color: 'var(--muted-2)' }}
-        >
-          digest · {error.digest}
+        <p className="mono" style={{ marginTop: 18, fontSize: 12, color: 'var(--muted-2)' }}>
+          {t('digest')} · {error.digest}
         </p>
       )}
       <div style={{ marginTop: 36, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-        <button onClick={reset} className="btn btn-primary">Try again →</button>
-        <Link href="/" className="btn btn-ghost">Back home</Link>
+        <button onClick={reset} className="btn btn-primary">{t('retry')}</button>
+        <Link href="/" className="btn btn-ghost">{t('home')}</Link>
       </div>
     </main>
   );

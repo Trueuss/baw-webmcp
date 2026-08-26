@@ -1,4 +1,4 @@
-// Snap screenshots of the running dev server using system Chrome.
+// Snap screenshots of the running dev server, both locales.
 // Run: node scripts/snap.cjs
 const puppeteer = require('puppeteer-core');
 const fs = require('fs');
@@ -10,16 +10,15 @@ const CHROME_PATHS = [
   'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe'
 ];
 
-const BASE = process.env.BAW_URL || 'http://localhost:3000';
 const OUT = path.join(__dirname, '..', 'public', 'demo');
 
-const SHOTS = [
-  { name: '01-home.png',       url: '/',         width: 1440, height: 900,  full: true  },
-  { name: '02-stylelab.png',   url: '/stylelab', width: 1440, height: 900,  full: true  },
-  { name: '03-stylist.png',    url: '/stylist',  width: 1440, height: 900,  full: true  },
-  { name: '04-tools.png',      url: '/tools',    width: 1440, height: 900,  full: true  },
-  { name: '05-lookbook.png',   url: '/lookbook', width: 1440, height: 900,  full: true  },
-  { name: '06-home-fold.png',  url: '/',         width: 1440, height: 900,  full: false }
+const SHOTS = (prefix, base) => [
+  { name: `${prefix}-01-home.png`,     url: `${base}/`,          width: 1440, height: 900, full: true  },
+  { name: `${prefix}-02-stylelab.png`, url: `${base}/stylelab`,  width: 1440, height: 900, full: true  },
+  { name: `${prefix}-03-stylist.png`,  url: `${base}/stylist`,   width: 1440, height: 900, full: true  },
+  { name: `${prefix}-04-tools.png`,    url: `${base}/tools`,     width: 1440, height: 900, full: true  },
+  { name: `${prefix}-05-lookbook.png`, url: `${base}/lookbook`,  width: 1440, height: 900, full: true  },
+  { name: `${prefix}-06-home-fold.png`,url: `${base}/`,          width: 1440, height: 900, full: false }
 ];
 
 (async () => {
@@ -27,10 +26,10 @@ const SHOTS = [
 
   const exe = CHROME_PATHS.find((p) => fs.existsSync(p));
   if (!exe) {
-    console.error('No Chrome or Edge binary found. Tried:', CHROME_PATHS);
+    console.error('No Chrome or Edge binary found.');
     process.exit(1);
   }
-  console.log('Using browser:', exe);
+  console.log('Browser:', exe);
 
   const browser = await puppeteer.launch({
     executablePath: exe,
@@ -39,19 +38,19 @@ const SHOTS = [
   });
 
   try {
-    for (const shot of SHOTS) {
-      const page = await browser.newPage();
-      await page.setViewport({ width: shot.width, height: shot.height, deviceScaleFactor: 2 });
-      const url = BASE + shot.url;
-      console.log('->', url);
-      await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
-      // Let any client-side hydration settle
-      await new Promise((r) => setTimeout(r, 1200));
-      const out = path.join(OUT, shot.name);
-      await page.screenshot({ path: out, fullPage: !!shot.full });
-      await page.close();
-      const size = fs.statSync(out).size;
-      console.log('   wrote', shot.name, `(${size} bytes)`);
+    for (const [prefix, base] of [['zh', 'http://localhost:3000'], ['en', 'http://localhost:3000/en']]) {
+      for (const shot of SHOTS(prefix, base)) {
+        const page = await browser.newPage();
+        await page.setViewport({ width: shot.width, height: shot.height, deviceScaleFactor: 2 });
+        const url = shot.url;
+        console.log('->', url);
+        await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
+        await new Promise((r) => setTimeout(r, 1200));
+        const out = path.join(OUT, shot.name);
+        await page.screenshot({ path: out, fullPage: !!shot.full });
+        await page.close();
+        console.log('   wrote', shot.name, `(${fs.statSync(out).size} bytes)`);
+      }
     }
   } finally {
     await browser.close();

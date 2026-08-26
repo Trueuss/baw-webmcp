@@ -1,19 +1,35 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Link } from '@/i18n/routing';
+import { LocaleSwitcher } from './LocaleSwitcher';
 
-const links = [
-  { href: '/how', label: 'How it works' },
-  { href: '/stylelab', label: 'Style Lab' },
-  { href: '/stylist', label: 'Pair Stylist' },
-  { href: '/tools', label: 'Tools' },
-  { href: '/lookbook', label: 'Lookbook' },
-  { href: '/pricing', label: 'Pricing' }
-];
+interface Labels {
+  home: string;
+  how: string;
+  stylelab: string;
+  stylist: string;
+  tools: string;
+  lookbook: string;
+  pricing: string;
+  try_demo: string;
+}
 
-export function Nav() {
-  const pathname = usePathname();
+export function Nav({ labels, locale }: { labels: Labels; locale: string }) {
+  const pathname = usePathname() || '/';
+
+  // Strip the locale prefix so internal links work without it (as-needed mode).
+  const stripped = pathname.replace(/^\/(en|zh)(?=\/|$)/, '') || '/';
+
+  const links = [
+    { href: '/how', label: labels.how },
+    { href: '/stylelab', label: labels.stylelab },
+    { href: '/stylist', label: labels.stylist },
+    { href: '/tools', label: labels.tools },
+    { href: '/lookbook', label: labels.lookbook },
+    { href: '/pricing', label: labels.pricing }
+  ] as const;
+
   return (
     <nav className="nav">
       <Link href="/" className="brand" aria-label="BAW home">
@@ -23,7 +39,7 @@ export function Nav() {
       </Link>
       <div className="nav-links">
         {links.map((l) => {
-          const active = pathname === l.href || (l.href !== '/' && pathname.startsWith(l.href));
+          const active = stripped === l.href || stripped.startsWith(l.href + '/');
           return (
             <Link
               key={l.href}
@@ -35,9 +51,12 @@ export function Nav() {
           );
         })}
       </div>
-      <Link href="/stylelab" className="nav-cta">
-        Try the demo →
-      </Link>
+      <div className="nav-actions">
+        <LocaleSwitcher currentLocale={locale} />
+        <Link href="/stylelab" className="nav-cta">
+          {labels.try_demo}
+        </Link>
+      </div>
     </nav>
   );
 }

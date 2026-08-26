@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 export function WebMCPBanner() {
   const [available, setAvailable] = useState<boolean | null>(null);
   const [toolCount, setToolCount] = useState(0);
+  const t = useTranslations('webmcp_banner');
 
   useEffect(() => {
     let mounted = true;
@@ -13,8 +15,7 @@ export function WebMCPBanner() {
       const mc = (document as unknown as { modelContext?: { getTools?: () => Promise<unknown[]> } })
         .modelContext;
       if (mc && typeof mc.getTools === 'function') {
-        mc
-          .getTools()
+        mc.getTools()
           .then((tools) => mounted && setToolCount(tools.length))
           .catch(() => mounted && setToolCount(0));
         setAvailable(true);
@@ -33,14 +34,14 @@ export function WebMCPBanner() {
   if (available === false) {
     return (
       <div className="webmcp-banner">
-        <em>WebMCP</em> not detected in this browser.{' '}
+        {t('not_detected')}{' '}
         <a
           href="https://developer.chrome.com/docs/ai/webmcp"
           target="_blank"
           rel="noopener"
           style={{ textDecoration: 'underline' }}
         >
-          Enable it in Chrome 149+
+          {t('enable_chrome')}
         </a>{' '}
         or open in{' '}
         <a
@@ -49,7 +50,7 @@ export function WebMCPBanner() {
           rel="noopener"
           style={{ textDecoration: 'underline' }}
         >
-          ChatGPT
+          {t('open_chatgpt')}
         </a>
         .
       </div>
@@ -59,8 +60,7 @@ export function WebMCPBanner() {
   return (
     <div className="webmcp-banner">
       <span className="pulse" />
-      <em>WebMCP</em> is live — {toolCount} tool{toolCount === 1 ? '' : 's'} registered for any
-      agent to call.
+      {t('live', { count: toolCount })}
     </div>
   );
 }

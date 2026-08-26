@@ -2,63 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
-interface Cmd {
-  id: string;
-  label: string;
-  hint: string;
-  run: (router: ReturnType<typeof useRouter>) => void;
-}
-
-const CMDS: Cmd[] = [
-  {
-    id: 'home',
-    label: 'Go home',
-    hint: '↩',
-    run: (r) => r.push('/')
-  },
-  {
-    id: 'lab',
-    label: 'Open Style Lab',
-    hint: 'L',
-    run: (r) => r.push('/stylelab')
-  },
-  {
-    id: 'stylist',
-    label: 'Open Pair Stylist',
-    hint: 'A',
-    run: (r) => r.push('/stylist')
-  },
-  {
-    id: 'how',
-    label: 'How it works',
-    hint: '?',
-    run: (r) => r.push('/how')
-  },
-  {
-    id: 'privacy',
-    label: 'Privacy',
-    hint: 'P',
-    run: (r) => r.push('/privacy')
-  },
-  {
-    id: 'tools',
-    label: 'Tools for agents',
-    hint: 'T',
-    run: (r) => r.push('/tools')
-  },
-  {
-    id: 'lookbook',
-    label: 'Lookbook',
-    hint: 'B',
-    run: (r) => r.push('/lookbook')
-  },
-  {
-    id: 'pricing',
-    label: 'Pricing',
-    hint: '$',
-    run: (r) => r.push('/pricing')
-  }
+const CMDS = (labels: { how: string; lab: string; stylist: string; tools: string; privacy: string; lookbook: string; pricing: string }) => [
+  { id: 'home', label: labels.how ? 'Go home' : '首页', run: (r: ReturnType<typeof useRouter>) => r.push('/') },
+  { id: 'lab', label: labels.lab, run: (r: ReturnType<typeof useRouter>) => r.push('/stylelab') },
+  { id: 'stylist', label: labels.stylist, run: (r: ReturnType<typeof useRouter>) => r.push('/stylist') },
+  { id: 'how', label: labels.how, run: (r: ReturnType<typeof useRouter>) => r.push('/how') },
+  { id: 'privacy', label: labels.privacy, run: (r: ReturnType<typeof useRouter>) => r.push('/privacy') },
+  { id: 'tools', label: labels.tools, run: (r: ReturnType<typeof useRouter>) => r.push('/tools') },
+  { id: 'lookbook', label: labels.lookbook, run: (r: ReturnType<typeof useRouter>) => r.push('/lookbook') },
+  { id: 'pricing', label: labels.pricing, run: (r: ReturnType<typeof useRouter>) => r.push('/pricing') }
 ];
 
 export function CommandPalette() {
@@ -66,6 +20,18 @@ export function CommandPalette() {
   const [query, setQuery] = useState('');
   const router = useRouter();
   const pathname = usePathname();
+  const t = useTranslations('command_palette');
+  const tn = useTranslations('nav');
+
+  const labels = {
+    how: tn('how'),
+    lab: tn('stylelab'),
+    stylist: tn('stylist'),
+    tools: tn('tools'),
+    privacy: 'Privacy',
+    lookbook: tn('lookbook'),
+    pricing: tn('pricing')
+  };
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -81,12 +47,12 @@ export function CommandPalette() {
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
 
-  // Close on route change
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
 
-  const filtered = CMDS.filter((c) =>
+  const cmds = CMDS(labels);
+  const filtered = cmds.filter((c) =>
     c.label.toLowerCase().includes(query.trim().toLowerCase())
   );
 
@@ -106,12 +72,12 @@ export function CommandPalette() {
           autoFocus
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Type a command — or hit ⌘K from anywhere"
+          placeholder={t('placeholder')}
           className="cmd-input"
         />
         <div className="cmd-list">
           {filtered.length === 0 ? (
-            <div className="cmd-empty">No matches. Try &ldquo;lab&rdquo; or &ldquo;stylist&rdquo;.</div>
+            <div className="cmd-empty">{t('empty')}</div>
           ) : (
             filtered.map((c) => (
               <button
@@ -123,14 +89,14 @@ export function CommandPalette() {
                 }}
               >
                 <span>{c.label}</span>
-                <span className="cmd-hint">{c.hint}</span>
+                <span className="cmd-hint">↵</span>
               </button>
             ))
           )}
         </div>
         <div className="cmd-foot">
-          <span>esc to close</span>
-          <span>↵ to run</span>
+          <span>{t('esc')}</span>
+          <span>{t('enter')}</span>
         </div>
       </div>
     </div>
