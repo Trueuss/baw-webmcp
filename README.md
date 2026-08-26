@@ -4,7 +4,11 @@
 
 This repository contains a submission to [The WebMCP Challenge](https://webmcp.devpost.com/) (Devpost, deadline **Sep 3, 2026**). It extends a hand-crafted product demo — *BAW* — with 10 native WebMCP tools, a "Pair Stylist" cross-tool copilot, and reactive schemas that change as the wardrobe changes.
 
-![BAW hero](public/preview/01-hero.png)
+![BAW home](public/demo/06-home-fold.png)
+
+The 12 WebMCP tools, registered live in the browser, drive the same wardrobe
+the user is editing. See [`/tools`](https://baw-webmcp.vercel.app/tools) for
+the full reference.
 
 ## What's inside
 
