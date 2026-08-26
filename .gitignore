@@ -30,6 +30,8 @@ next-build.log*
 next-dev.log*
 npm-install.log*
 npm-upgrade.log*
+snap.log
+git-push.log*
 
 # local env files
 .env*.local
